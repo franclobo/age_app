@@ -5,91 +5,117 @@
  * @format
  */
 
-import React from 'react';
-import type {PropsWithChildren} from 'react';
+import React, { useState } from 'react';
 import {
   SafeAreaView,
   ScrollView,
-  StatusBar,
   StyleSheet,
   Text,
+  TextInput,
+  Button,
   useColorScheme,
   View,
 } from 'react-native';
 
-import {
-  Colors,
-  DebugInstructions,
-  Header,
-  LearnMoreLinks,
-  ReloadInstructions,
-} from 'react-native/Libraries/NewAppScreen';
+type Age = {
+  years: number | string;
+  months: number | string;
+  days: number | string;
+};
 
-type SectionProps = PropsWithChildren<{
-  title: string;
-}>;
+function calculateAge(birthDate: string): Age {
+  const today = new Date();
+  const birth = new Date(birthDate);
 
-function Section({children, title}: SectionProps): React.JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
-  return (
-    <View style={styles.sectionContainer}>
-      <Text
-        style={[
-          styles.sectionTitle,
-          {
-            color: isDarkMode ? Colors.white : Colors.black,
-          },
-        ]}>
-        {title}
-      </Text>
-      <Text
-        style={[
-          styles.sectionDescription,
-          {
-            color: isDarkMode ? Colors.light : Colors.dark,
-          },
-        ]}>
-        {children}
-      </Text>
-    </View>
-  );
+  let ageYears = today.getFullYear() - birth.getFullYear();
+  let ageMonths = today.getMonth() - birth.getMonth();
+  let ageDays = today.getDate() - birth.getDate();
+
+  if (ageMonths < 0 || (ageMonths === 0 && today.getDate() < birth.getDate())) {
+    ageYears--;
+    ageMonths += 12;
+  }
+
+  if (ageDays < 0) {
+    const prevMonthLastDay = new Date(today.getFullYear(), today.getMonth(), 0).getDate();
+    ageMonths--;
+    ageDays += prevMonthLastDay;
+  }
+
+  if (isNaN(ageYears) || isNaN(ageMonths) || isNaN(ageDays)) {
+    return { years: '--', months: '--', days: '--' };
+  }
+
+  return { years: ageYears, months: ageMonths, days: ageDays };
 }
 
-function App(): React.JSX.Element {
+function App() {
+  const [day, setDay] = useState('');
+  const [month, setMonth] = useState('');
+  const [year, setYear] = useState('');
+  const [age, setAge] = useState<Age>({ years: 0, months: 0, days: 0 });
+
   const isDarkMode = useColorScheme() === 'dark';
 
-  const backgroundStyle = {
-    backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
+  const calculateAndSetAge = () => {
+    const birthDate = `${year}-${month}-${day}`;
+    const calculatedAge = calculateAge(birthDate);
+    setAge(calculatedAge);
   };
 
   return (
-    <SafeAreaView style={backgroundStyle}>
-      <StatusBar
-        barStyle={isDarkMode ? 'light-content' : 'dark-content'}
-        backgroundColor={backgroundStyle.backgroundColor}
-      />
+    <SafeAreaView>
       <ScrollView
         contentInsetAdjustmentBehavior="automatic"
-        style={backgroundStyle}>
-        <Header />
+      >
         <View
           style={{
-            backgroundColor: isDarkMode ? Colors.black : Colors.white,
+            margin: 10,
+            borderRadius: 5,
           }}>
-          <Section title="Step One">
-            Edit <Text style={styles.highlight}>App.tsx</Text> to change this
-            screen and then come back to see your edits.
-          </Section>
-          <Section title="See Your Changes">
-            <ReloadInstructions />
-          </Section>
-          <Section title="Debug">
-            <DebugInstructions />
-          </Section>
-          <Section title="Learn More">
-            Read the docs to discover what to do next:
-          </Section>
-          <LearnMoreLinks />
+            <View style={styles.data}>
+              <View style={styles.item}>
+                <Text style={styles.text}>Day</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Day"
+                  onChangeText={text => setDay(text)}
+                  defaultValue={day}
+                />
+              </View>
+              <View style={styles.item}>
+                <Text style={styles.text}>Month</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Month"
+                  onChangeText={text => setMonth(text)}
+                  defaultValue={month}
+                />
+              </View>
+              <View style={styles.item}>
+                <Text style={styles.text}>Year</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Year"
+                  onChangeText={text => setYear(text)}
+                  defaultValue={year}
+                />
+              </View>
+            </View>
+            <View style={styles.buttonContainer}>
+              <Button onPress={calculateAndSetAge} title="Calculate Age" />
+            </View>
+            <View style={styles.results}>
+              <Text style={styles.text}>
+                {age.years} years
+              </Text>
+              <Text style={styles.text}>
+                {age.months} months
+              </Text>
+              <Text style={styles.text}>
+                {age.days} days
+              </Text>
+            </View>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -97,21 +123,41 @@ function App(): React.JSX.Element {
 }
 
 const styles = StyleSheet.create({
-  sectionContainer: {
-    marginTop: 32,
-    paddingHorizontal: 24,
+  data: {
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  sectionTitle: {
-    fontSize: 24,
-    fontWeight: '600',
+  results: {
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'flex-start',
+    marginTop: 20,
   },
-  sectionDescription: {
-    marginTop: 8,
-    fontSize: 18,
-    fontWeight: '400',
+  item: {
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'flex-start',
+    margin: 10,
   },
-  highlight: {
-    fontWeight: '700',
+  text: {
+    textTransform: 'uppercase',
+    letterSpacing: 2,
+  },
+  input: {
+    height: 40,
+    width: 100,
+    marginTop: 12,
+    borderWidth: 1,
+    padding: 10,
+    borderRadius: 5,
+  },
+  buttonContainer: {
+    alignItems: 'center',
+    marginTop: 20,
   },
 });
 
